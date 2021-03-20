@@ -4,7 +4,7 @@ BUILD_DEPS := $(BUILD_DEPS) $(MAKEFILE_LIST)
 SRCS := $(SRC_FILES)
 
 ifneq ($(SRC_DIRS),)
-SRCS += $(shell find $(SRC_DIRS) -maxdepth 1 -name *.c -or -name *.s -or -name *.S)
+SRCS += $(shell find $(SRC_DIRS) -maxdepth 1 -name *.cpp -or -name *.c -or -name *.s -or -name *.S)
 endif
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
@@ -86,7 +86,7 @@ $(1)_CPPFLAGS := \
 $(1)_LIB_SRCS := $$($(1)_LIB_FILES)
 
 ifneq ($$($(1)_LIB_DIRS),)
-$(1)_LIB_SRCS += $$(shell find $$($(1)_LIB_DIRS) -maxdepth 1 -name *.c -or -name *.s -or -name *.S)
+$(1)_LIB_SRCS += $$(shell find $$($(1)_LIB_DIRS) -maxdepth 1 -name *.cpp -or -name *.c -or -name *.s -or -name *.S)
 endif
 
 $(1)_LIB_OBJS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.o)

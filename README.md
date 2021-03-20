@@ -15,6 +15,7 @@
 - `CXXFLAGS`
 - `LDFLAGS`
 - `LIBS`
+- `LDLIBS`
 
 ### Library Variables
 For each library name in `LIBS`:
