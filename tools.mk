@@ -115,7 +115,7 @@ ifneq ($(LINKER_CFG),)
 LINKER_CFG_ARG := -T $(LINKER_CFG)
 endif
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS)
+$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG)
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_CFG_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
