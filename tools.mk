@@ -24,19 +24,17 @@ LDFLAGS := \
   $(addprefix -Wl$(COMMA),$(LDFLAGS)) \
 
 LIBS_DEPS := \
-	$(foreach _lib,$(LIBS),$(BUILD_DIR)/$(_lib).lib) \
+  $(foreach _lib,$(LIBS),$(BUILD_DIR)/$(_lib).lib) \
 
 LDLIBS := \
-	$(LIBS_DEPS) \
-	$(LDLIBS) \
-
-TOOLCHAIN_PREFIX ?= arm-none-eabi-
+  $(LIBS_DEPS) \
+  $(LDLIBS) \
 
 CC      := $(TOOLCHAIN_PREFIX)gcc
 CXX     := $(TOOLCHAIN_PREFIX)g++
 AS      := $(TOOLCHAIN_PREFIX)as
 LD      := $(TOOLCHAIN_PREFIX)gcc
-AR      := $(TOOLCHAIN_PREFIX)ar
+AR      := $(TOOLCHAIN_PREFIX)gcc-ar
 GDB     := $(TOOLCHAIN_PREFIX)gdb
 OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
 SIZE    := $(TOOLCHAIN_PREFIX)size
