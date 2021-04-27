@@ -83,6 +83,7 @@ $(1)_CPPFLAGS := \
   $$($(1)_INC_FLAGS) \
   $$($(1)_SYS_INC_FLAGS) \
   $$($(1)_CPPFLAGS) \
+  $$(addprefix -D,$$($(1)_DEFINES)) \
 
 $(1)_LIB_SRCS := $$($(1)_SRC_FILES)
 
