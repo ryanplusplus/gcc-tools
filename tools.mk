@@ -18,6 +18,7 @@ CPPFLAGS := \
   $(INC_FLAGS) \
   $(SYS_INC_FLAGS) \
   $(CPPFLAGS) \
+  $(addprefix -D,$(DEFINES)) \
 
 COMMA :=,
 LDFLAGS := \
@@ -73,7 +74,7 @@ endef
 # $1 lib name
 define generate_lib
 
-$(1)_INC_DIRS += $$($(1)_LIB_DIRS)
+$(1)_INC_DIRS += $$($(1)_SRC_DIRS)
 $(1)_INC_FLAGS := $$(addprefix -iquote,$$($(1)_INC_DIRS))
 
 $(1)_SYS_INC_FLAGS := $$(addprefix -I,$$($(1)_SYS_INC_DIRS))
@@ -83,10 +84,10 @@ $(1)_CPPFLAGS := \
   $$($(1)_SYS_INC_FLAGS) \
   $$($(1)_CPPFLAGS) \
 
-$(1)_LIB_SRCS := $$($(1)_LIB_FILES)
+$(1)_LIB_SRCS := $$($(1)_SRC_FILES)
 
-ifneq ($$($(1)_LIB_DIRS),)
-$(1)_LIB_SRCS += $$(shell find $$($(1)_LIB_DIRS) -maxdepth 1 -name *.cpp -or -name *.c -or -name *.s -or -name *.S)
+ifneq ($$($(1)_SRC_DIRS),)
+$(1)_LIB_SRCS += $$(shell find $$($(1)_SRC_DIRS) -maxdepth 1 -name *.cpp -or -name *.c -or -name *.s -or -name *.S)
 endif
 
 $(1)_LIB_OBJS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.o)
