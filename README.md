@@ -19,7 +19,6 @@
 
 ### Library Variables
 For each library name in `LIBS`:
-- `$(name)_LIB_ROOT`
 - `$(name)_ASFLAGS`
 - `$(name)_CPPFLAGS`
 - `$(name)_CFLAGS`
