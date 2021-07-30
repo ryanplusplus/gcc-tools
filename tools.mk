@@ -40,34 +40,42 @@ GDB     := $(TOOLCHAIN_PREFIX)gdb
 OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
 SIZE    := $(TOOLCHAIN_PREFIX)size
 
-# $1 prefix
+# $1 filename
 # $2 ASFLAGS
 # $3 CPPFLAGS
 # $4 CFLAGS
 # $5 CXXFLAGS
-define generate_compilation_rules
+define generate_compilation_rule
 
-$$(BUILD_DIR)/$(1)%.s.o: $(1)%.s $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.s)
+$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AS) $(2) $$< -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.S.o: $(1)%.S $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.S)
+$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -c $(2) $$< $(3) -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.c.o: $(1)%.c $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.c)
+$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -E $$<
 	@$$(CC) -x c $(3) $(4) -c $$< -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.cpp.o: $(1)%.cpp $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.cpp)
+$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CXX) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -E $$<
 	@$$(CXX) -x c++ $(3) $(5) -c $$< -o $$@
+endif
 
 endef
 
@@ -101,7 +109,7 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(eval $$(call generate_compilation_rules,$$($(1)_LIB_ROOT),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS)))
+$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_compilation_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS))))
 
 endef
 
@@ -125,7 +133,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(eval $(call generate_compilation_rules,,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS)))
+$(foreach _src,$(SRCS),$(eval $(call generate_compilation_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS))))
 
 .PHONY: clean
 clean:
