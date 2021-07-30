@@ -45,7 +45,7 @@ SIZE    := $(TOOLCHAIN_PREFIX)size
 # $3 CPPFLAGS
 # $4 CFLAGS
 # $5 CXXFLAGS
-define generate_compilation_rule
+define generate_build_rule
 
 ifeq ($(suffix $(1)),.s)
 $$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
@@ -109,7 +109,7 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_compilation_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS))))
+$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS))))
 
 endef
 
@@ -133,7 +133,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(foreach _src,$(SRCS),$(eval $(call generate_compilation_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS))))
+$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS))))
 
 .PHONY: clean
 clean:
