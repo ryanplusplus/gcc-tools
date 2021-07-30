@@ -1,4 +1,11 @@
-BUILD_DEPS := $(BUILD_DEPS) $(MAKEFILE_LIST)
+CC      := $(TOOLCHAIN_PREFIX)gcc
+CXX     := $(TOOLCHAIN_PREFIX)g++
+AS      := $(TOOLCHAIN_PREFIX)as
+LD      := $(TOOLCHAIN_PREFIX)gcc
+AR      := $(TOOLCHAIN_PREFIX)gcc-ar
+GDB     := $(TOOLCHAIN_PREFIX)gdb
+OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
+SIZE    := $(TOOLCHAIN_PREFIX)size
 
 SRCS := $(SRC_FILES)
 
@@ -31,38 +38,30 @@ LDLIBS := \
   $(LIBS_DEPS) \
   $(LDLIBS) \
 
-CC      := $(TOOLCHAIN_PREFIX)gcc
-CXX     := $(TOOLCHAIN_PREFIX)g++
-AS      := $(TOOLCHAIN_PREFIX)as
-LD      := $(TOOLCHAIN_PREFIX)gcc
-AR      := $(TOOLCHAIN_PREFIX)gcc-ar
-GDB     := $(TOOLCHAIN_PREFIX)gdb
-OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
-SIZE    := $(TOOLCHAIN_PREFIX)size
-
 # $1 filename
 # $2 ASFLAGS
 # $3 CPPFLAGS
 # $4 CFLAGS
 # $5 CXXFLAGS
+# $6 build deps
 define generate_build_rule
 
 ifeq ($(suffix $(1)),.s)
-$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AS) $(2) $$< -o $$@
 endif
 
 ifeq ($(suffix $(1)),.S)
-$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -c $(2) $$< $(3) -o $$@
 endif
 
 ifeq ($(suffix $(1)),.c)
-$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -E $$<
@@ -70,7 +69,7 @@ $$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
 endif
 
 ifeq ($(suffix $(1)),.cpp)
-$$(BUILD_DIR)/$(1).o: $(1) $$(BUILD_DEPS)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CXX) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -E $$<
@@ -109,7 +108,14 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS))))
+$$(shell mkdir -p $$(BUILD_DIR)/$(1))
+$$(shell echo ASFLAGS $$($(1)_ASFLAGS) CPPFLAGS $$($(1)_CPPFLAGS) CFLAGS $$($(1)_CFLAGS) CXXFLAGS $$($(1)_CXXFLAGS) > $$(BUILD_DIR)/lib_$(1).build_deps.next)
+$$(shell diff $$(BUILD_DIR)/lib_$(1).build_deps.next $$(BUILD_DIR)/lib_$(1).build_deps > /dev/null 2>&1)
+ifneq ($$(.SHELLSTATUS),0)
+$$(shell mv $$(BUILD_DIR)/lib_$(1).build_deps.next $$(BUILD_DIR)/lib_$(1).build_deps)
+endif
+
+$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_deps)))
 
 endef
 
@@ -133,11 +139,18 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS))))
+$(shell mkdir -p $(BUILD_DIR))
+$(shell echo ASFLAGS $(ASFLAGS) CPPFLAGS $(CPPFLAGS) CFLAGS $(CFLAGS) CXXFLAGS $(CXXFLAGS) > $(BUILD_DIR)/build_deps.next)
+$(shell diff $(BUILD_DIR)/build_deps.next $(BUILD_DIR)/build_deps > /dev/null 2>&1)
+ifneq ($(.SHELLSTATUS),0)
+$(shell mv $(BUILD_DIR)/build_deps.next $(BUILD_DIR)/build_deps)
+endif
+
+$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_deps)))
 
 .PHONY: clean
 clean:
 	@echo Cleaning...
-	@$(RM) -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR)
 
 -include $(DEPS)
