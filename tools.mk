@@ -40,7 +40,7 @@ LDLIBS := \
 
 # $1 filename
 # $2 flags to capture
-define capture_build_flags
+define capture_flags
 $(shell mkdir -p $(dir $(1)))
 $(shell echo $(foreach flag,$(2),$(flag) $($(flag))) > $(1).next)
 $(shell if cmp -s $(1).next $(1); then rm $(1).next; else mv $(1).next $(1); fi)
@@ -116,7 +116,7 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(call capture_build_flags,$$(BUILD_DIR)/lib_$(1).build_flags,$(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
+$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,$(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
 
 $$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
 
@@ -132,7 +132,9 @@ ifneq ($(LINKER_CFG),)
 LINKER_CFG_ARG := -T $(LINKER_CFG)
 endif
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG)
+$(call capture_flags,$(BUILD_DIR)/link_flags,LINKER_CFG_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+
+$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG) $(BUILD_DIR)/link_flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_CFG_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
@@ -142,7 +144,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(call capture_build_flags,$(BUILD_DIR)/build_flags,ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
+$(call capture_flags,$(BUILD_DIR)/build_flags,ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
 $(eval $(call generate_build_rule,%.s,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
 $(eval $(call generate_build_rule,%.S,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
