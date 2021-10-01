@@ -20,10 +20,6 @@ CPPFLAGS := \
   $(CPPFLAGS) \
   $(addprefix -D,$(DEFINES)) \
 
-COMMA :=,
-LDFLAGS := \
-  $(addprefix -Wl$(COMMA),$(LDFLAGS)) \
-
 LIBS_DEPS := \
   $(foreach _lib,$(LIBS),$(BUILD_DIR)/$(_lib).lib) \
 
