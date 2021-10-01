@@ -1,4 +1,11 @@
-BUILD_DEPS := $(BUILD_DEPS) $(MAKEFILE_LIST)
+CC      := $(TOOLCHAIN_PREFIX)gcc
+CXX     := $(TOOLCHAIN_PREFIX)g++
+AS      := $(TOOLCHAIN_PREFIX)as
+LD      := $(TOOLCHAIN_PREFIX)gcc
+AR      := $(TOOLCHAIN_PREFIX)gcc-ar
+GDB     := $(TOOLCHAIN_PREFIX)gdb
+OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
+SIZE    := $(TOOLCHAIN_PREFIX)size
 
 SRCS := $(SRC_FILES)
 
@@ -27,43 +34,51 @@ LDLIBS := \
   $(LIBS_DEPS) \
   $(LDLIBS) \
 
-CC      := $(TOOLCHAIN_PREFIX)gcc
-CXX     := $(TOOLCHAIN_PREFIX)g++
-AS      := $(TOOLCHAIN_PREFIX)as
-LD      := $(TOOLCHAIN_PREFIX)gcc
-AR      := $(TOOLCHAIN_PREFIX)gcc-ar
-GDB     := $(TOOLCHAIN_PREFIX)gdb
-OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
-SIZE    := $(TOOLCHAIN_PREFIX)size
+# $1 filename
+# $2 flags to capture
+define capture_flags
+$(shell mkdir -p $(dir $(1)))
+$(shell echo $(foreach flag,$(2),$(flag) $($(flag))) > $(1).next)
+$(shell if cmp -s $(1).next $(1); then rm $(1).next; else mv $(1).next $(1); fi)
+endef
 
-# $1 prefix
+# $1 filename
 # $2 ASFLAGS
 # $3 CPPFLAGS
 # $4 CFLAGS
 # $5 CXXFLAGS
-define generate_compilation_rules
+# $6 build deps
+define generate_build_rule
 
-$$(BUILD_DIR)/$(1)%.s.o: $(1)%.s $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.s)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AS) $(2) $$< -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.S.o: $(1)%.S $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.S)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -c $(2) $$< $(3) -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.c.o: $(1)%.c $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.c)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -E $$<
 	@$$(CC) -x c $(3) $(4) -c $$< -o $$@
+endif
 
-$$(BUILD_DIR)/$(1)%.cpp.o: $(1)%.cpp $$(BUILD_DEPS)
+ifeq ($(suffix $(1)),.cpp)
+$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CXX) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -E $$<
 	@$$(CXX) -x c++ $(3) $(5) -c $$< -o $$@
+endif
 
 endef
 
@@ -97,7 +112,9 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(eval $$(call generate_compilation_rules,$$($(1)_LIB_ROOT),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS)))
+$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,$(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
+
+$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
 
 endef
 
@@ -111,7 +128,9 @@ ifneq ($(LINKER_CFG),)
 LINKER_CFG_ARG := -T $(LINKER_CFG)
 endif
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG)
+$(call capture_flags,$(BUILD_DIR)/link_flags,LINKER_CFG_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+
+$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG) $(BUILD_DIR)/link_flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_CFG_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
@@ -121,11 +140,16 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(eval $(call generate_compilation_rules,,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS)))
+$(call capture_flags,$(BUILD_DIR)/build_flags,ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
+
+$(eval $(call generate_build_rule,%.s,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
+$(eval $(call generate_build_rule,%.S,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
+$(eval $(call generate_build_rule,%.c,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
+$(eval $(call generate_build_rule,%.cpp,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
 
 .PHONY: clean
 clean:
 	@echo Cleaning...
-	@$(RM) -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR)
 
 -include $(DEPS)
