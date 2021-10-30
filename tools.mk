@@ -7,6 +7,19 @@ GDB     := $(TOOLCHAIN_PREFIX)gdb
 OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
 SIZE    := $(TOOLCHAIN_PREFIX)size
 
+define capture_version
+"$(shell $(1) --version | head -n 1)"
+endef
+
+CC_VERSION      := $(call capture_version,$(CC))
+CXX_VERSION     := $(call capture_version,$(CXX))
+AS_VERSION      := $(call capture_version,$(AS))
+LD_VERSION      := $(call capture_version,$(LD))
+AR_VERSION      := $(call capture_version,$(AR))
+GDB_VERSION     := $(call capture_version,$(GDB))
+OBJCOPY_VERSION := $(call capture_version,$(OBJCOPY))
+SIZE_VERSION    := $(call capture_version,$(SIZE))
+
 SRCS := $(SRC_FILES)
 
 ifneq ($(SRC_DIRS),)
@@ -107,12 +120,14 @@ $(1)_LIB_DEPS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.d)
 
 DEPS := $(DEPS) $(1)_LIB_DEPS
 
-$$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS)
+$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).ar_flags,AR_VERSION)
+
+$$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$(1).ar_flags
 	@echo Building $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,$(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
+$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
 
 $$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
 
@@ -128,19 +143,21 @@ ifneq ($(LINKER_CFG),)
 LINKER_CFG_ARG := -T $(LINKER_CFG)
 endif
 
-$(call capture_flags,$(BUILD_DIR)/link_flags,LINKER_CFG_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+$(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_CFG_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG) $(BUILD_DIR)/link_flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_CFG_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
 
-$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
+$(call capture_flags,$(BUILD_DIR)/hex_flags,OBJCOPY_VERSION)
+
+$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex_flags
 	@echo Creating $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(call capture_flags,$(BUILD_DIR)/build_flags,ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
+$(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
 $(eval $(call generate_build_rule,%.s,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
 $(eval $(call generate_build_rule,%.S,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
