@@ -139,16 +139,16 @@ all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex
 
 $(foreach _lib,$(LIBS),$(eval $(call generate_lib,$(_lib))))
 
-ifneq ($(LINKER_CFG),)
-LINKER_CFG_ARG := -T $(LINKER_CFG)
+ifneq ($(LINKER_SCRIPT),)
+LINKER_SCRIPT_ARG := -T $(LINKER_SCRIPT)
 endif
 
-$(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_CFG_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+$(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_SCRIPT_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_CFG) $(BUILD_DIR)/link_flags
+$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_SCRIPT) $(BUILD_DIR)/link_flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
-	@$(LD) $(LINKER_CFG_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
+	@$(LD) $(LINKER_SCRIPT_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
 
 $(call capture_flags,$(BUILD_DIR)/hex_flags,OBJCOPY_VERSION)
 
