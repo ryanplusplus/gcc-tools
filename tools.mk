@@ -118,7 +118,7 @@ endif
 $(1)_LIB_OBJS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.o)
 $(1)_LIB_DEPS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.d)
 
-DEPS := $(DEPS) $(1)_LIB_DEPS
+DEPS := $(DEPS) $$($(1)_LIB_DEPS)
 
 $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).ar_flags,AR_VERSION)
 
