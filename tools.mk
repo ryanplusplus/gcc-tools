@@ -120,16 +120,16 @@ $(1)_LIB_DEPS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.d)
 
 DEPS := $(DEPS) $$($(1)_LIB_DEPS)
 
-$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).ar_flags,AR_VERSION)
+unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).ar_flags,AR_VERSION)
 
 $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$(1).ar_flags
 	@echo Building $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
 
-$$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
+unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
 
-$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
+unused := $$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
 
 endef
 
@@ -143,21 +143,21 @@ ifneq ($(LINKER_SCRIPT),)
 LINKER_SCRIPT_ARG := -T $(LINKER_SCRIPT)
 endif
 
-$(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_SCRIPT_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+unused := $(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_SCRIPT_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_SCRIPT) $(BUILD_DIR)/link_flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_SCRIPT_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
 
-$(call capture_flags,$(BUILD_DIR)/hex_flags,OBJCOPY_VERSION)
+unused := $(call capture_flags,$(BUILD_DIR)/hex_flags,OBJCOPY_VERSION)
 
 $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex_flags
 	@echo Creating $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-$(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
+unused := $(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
 $(eval $(call generate_build_rule,%.s,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
 $(eval $(call generate_build_rule,%.S,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
