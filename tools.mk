@@ -82,16 +82,14 @@ ifeq ($(suffix $(1)),.c)
 $$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
-	@$$(CC) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -E $$<
-	@$$(CC) -x c $(3) $(4) -c $$< -o $$@
+	@$$(CC) -MMD -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -c $$< -o $$@
 endif
 
 ifeq ($(suffix $(1)),.cpp)
 $$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
-	@$$(CXX) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -E $$<
-	@$$(CXX) -x c++ $(3) $(5) -c $$< -o $$@
+	@$$(CXX) -MM -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -c $$< -o $$@
 endif
 
 endef
