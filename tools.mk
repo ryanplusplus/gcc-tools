@@ -122,7 +122,7 @@ $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$(1).ar_flags
 
 unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
 
-unused := $$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
+$$(foreach _src,$$($(1)_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($(1)_ASFLAGS),$$($(1)_CPPFLAGS),$$($(1)_CFLAGS),$$($(1)_CXXFLAGS),$$(BUILD_DIR)/lib_$(1).build_flags)))
 
 endef
 
@@ -152,7 +152,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex_flags
 
 unused := $(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
-unused := $(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags)))
+$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags)))
 
 .PHONY: clean
 clean:
