@@ -63,30 +63,23 @@ endef
 # $5 CXXFLAGS
 # $6 build deps
 define generate_build_rule
-
-ifeq ($(suffix $(1)),.s)
 $$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
+ifeq ($(suffix $(1)),.s)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AS) $(2) $$< -o $$@
 endif
-
 ifeq ($(suffix $(1)),.S)
-$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -c $(2) $$< $(3) -o $$@
 endif
-
 ifeq ($(suffix $(1)),.c)
-$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -x c -MMD -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(4) -c $$< -o $$@
 endif
-
 ifeq ($(suffix $(1)),.cpp)
-$$(BUILD_DIR)/$(1).o: $(1) $(6) $(lastword $(MAKEFILE_LIST))
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CXX) -x c++ -MMD -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $(3) $(5) -c $$< -o $$@
@@ -159,10 +152,7 @@ $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex_flags
 
 unused := $(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
-$(eval $(call generate_build_rule,%.s,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
-$(eval $(call generate_build_rule,%.S,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
-$(eval $(call generate_build_rule,%.c,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
-$(eval $(call generate_build_rule,%.cpp,$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags))
+unused := $(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags)))
 
 .PHONY: clean
 clean:
