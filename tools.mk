@@ -113,12 +113,18 @@ $(1)_LIB_DEPS := $$($(1)_LIB_SRCS:%=$$(BUILD_DIR)/%.d)
 
 DEPS := $(DEPS) $$($(1)_LIB_DEPS)
 
+ifeq ($(2),LIB)
 unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).ar_flags,AR_VERSION)
 
 $$(BUILD_DIR)/$(1).lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$(1).ar_flags
 	@echo Building $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
+endif
+
+ifeq ($(2),INTERFACE_LIB)
+OBJS += $$($(1)_LIB_OBJS)
+endif
 
 unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$(1).build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $(1)_ASFLAGS $(1)_CPPFLAGS $(1)_CFLAGS $(1)_CXXFLAGS)
 
@@ -130,7 +136,8 @@ endef
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex
 	@$(SIZE) $<
 
-$(foreach _lib,$(LIBS),$(eval $(call generate_lib,$(_lib))))
+$(foreach _lib,$(LIBS),$(eval $(call generate_lib,$(_lib),LIB)))
+$(foreach _lib,$(INTERFACE_LIBS),$(eval $(call generate_lib,$(_lib),INTERFACE_LIB)))
 
 ifneq ($(LINKER_SCRIPT),)
 LINKER_SCRIPT_ARG := -T $(LINKER_SCRIPT)
