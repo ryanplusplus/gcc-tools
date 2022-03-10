@@ -68,18 +68,15 @@ ifeq ($(suffix $1),.s)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AS) $2 $$< -o $$@
-endif
-ifeq ($(suffix $1),.S)
+else ifeq ($(suffix $1),.S)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -c $2 $$< $3 -o $$@
-endif
-ifeq ($(suffix $1),.c)
+else ifeq ($(suffix $1),.c)
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CC) -x c -MMD -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $3 $4 -c $$< -o $$@
-endif
-ifeq ($(suffix $1),.cpp)
+else ifeq ($(suffix $1),.cpp)
 	@echo Compiling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(CXX) -x c++ -MMD -MP -MF "$$(@:%.o=%.d)" -MT "$$@" $3 $5 -c $$< -o $$@
