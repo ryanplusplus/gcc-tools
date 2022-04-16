@@ -1,11 +1,11 @@
-CC      := $(TOOLCHAIN_PREFIX)gcc
-CXX     := $(TOOLCHAIN_PREFIX)g++
-AS      := $(TOOLCHAIN_PREFIX)as
-LD      := $(TOOLCHAIN_PREFIX)gcc
-AR      := $(TOOLCHAIN_PREFIX)gcc-ar
-GDB     := $(TOOLCHAIN_PREFIX)gdb
-OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
-SIZE    := $(TOOLCHAIN_PREFIX)size
+CC      = $(TOOLCHAIN_PREFIX)gcc
+CXX     = $(TOOLCHAIN_PREFIX)g++
+AS      = $(TOOLCHAIN_PREFIX)as
+LD      = $(TOOLCHAIN_PREFIX)gcc
+AR      = $(TOOLCHAIN_PREFIX)gcc-ar
+GDB     = $(TOOLCHAIN_PREFIX)gdb
+OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
+SIZE    = $(TOOLCHAIN_PREFIX)size
 
 define capture_version
 "$(shell $1 --version | head -n 1)"
@@ -128,10 +128,6 @@ unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$1.build_flags,AS_VERSION CC_V
 $$(foreach _src,$$($1_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($1_ASFLAGS),$$($1_CPPFLAGS),$$($1_CFLAGS),$$($1_CXXFLAGS),$$(BUILD_DIR)/lib_$1.build_flags)))
 
 endef
-
-.PHONY: all
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex
-	@$(SIZE) $<
 
 $(foreach _lib,$(LIBS),$(eval $(call generate_lib,$(_lib),LIB)))
 $(foreach _lib,$(INTERFACE_LIBS),$(eval $(call generate_lib,$(_lib),INTERFACE_LIB)))
