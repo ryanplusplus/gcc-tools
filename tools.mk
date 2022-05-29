@@ -63,7 +63,7 @@ endef
 # $5 CXXFLAGS
 # $6 build deps
 define generate_build_rule
-$$(BUILD_DIR)/$1.o: $1 $6 $(lastword $(MAKEFILE_LIST))
+$$(BUILD_DIR)/$1.o: $1 $6 $(lastword $(MAKEFILE_LIST)) $(BUILD_DEPS)
 ifeq ($(suffix $1),.s)
 	@echo Assembling $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)

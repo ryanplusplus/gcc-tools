@@ -3,6 +3,7 @@
 ### Target Variables
 - `TARGET`
 - `BUILD_DIR`
+- `BUILD_DEPS`
 - `LINKER_SCRIPT`
 - `SVD`
 - `INC_DIRS`
