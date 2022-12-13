@@ -85,6 +85,7 @@ endif
 endef
 
 # $1 lib name
+# $2 lib type (LIB or INTERFACE_LIB)
 define generate_lib
 
 $1_INC_DIRS += $$($1_SRC_DIRS)
