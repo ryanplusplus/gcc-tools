@@ -52,7 +52,8 @@ LDLIBS := \
 # $2 flags to capture
 define capture_flags
 $(shell mkdir -p $(dir $1))
-$(shell echo $(foreach flag,$2,$(flag) $($(flag))) > $1.next)
+$(shell rm -rf $1.next)
+$(foreach flag,$2,$(shell echo $(flag):=$($(flag)) >> $1.next))
 $(shell if cmp -s $1.next $1; then rm $1.next; else mv $1.next $1; fi)
 endef
 
@@ -112,9 +113,9 @@ $1_LIB_DEPS := $$($1_LIB_SRCS:%=$$(BUILD_DIR)/%.d)
 DEPS := $(DEPS) $$($1_LIB_DEPS)
 
 ifeq ($2,LIB)
-unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$1.ar_flags,AR_VERSION)
+unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$1.ar.flags,AR_VERSION)
 
-$$(BUILD_DIR)/$1.lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$1.ar_flags
+$$(BUILD_DIR)/$1.lib: $$($1_LIB_OBJS) $$(BUILD_DIR)/lib_$1.ar.flags
 	@echo Building $$(notdir $$@)...
 	@mkdir -p $$(dir $$@)
 	@$$(AR) rcs $$@ $$^
@@ -124,9 +125,9 @@ ifeq ($2,INTERFACE_LIB)
 OBJS += $$($1_LIB_OBJS)
 endif
 
-unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$1.build_flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $1_ASFLAGS $1_CPPFLAGS $1_CFLAGS $1_CXXFLAGS)
+unused := $$(call capture_flags,$$(BUILD_DIR)/lib_$1.build.flags,AS_VERSION CC_VERSION CXX_VERSION AR_VERSION $1_ASFLAGS $1_CPPFLAGS $1_CFLAGS $1_CXXFLAGS)
 
-$$(foreach _src,$$($1_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($1_ASFLAGS),$$($1_CPPFLAGS),$$($1_CFLAGS),$$($1_CXXFLAGS),$$(BUILD_DIR)/lib_$1.build_flags)))
+$$(foreach _src,$$($1_LIB_SRCS),$$(eval $$(call generate_build_rule,$$(_src),$$($1_ASFLAGS),$$($1_CPPFLAGS),$$($1_CFLAGS),$$($1_CXXFLAGS),$$(BUILD_DIR)/lib_$1.build.flags)))
 
 endef
 
@@ -137,23 +138,23 @@ ifneq ($(LINKER_SCRIPT),)
 LINKER_SCRIPT_ARG := -T $(LINKER_SCRIPT)
 endif
 
-unused := $(call capture_flags,$(BUILD_DIR)/link_flags,LD_VERSION LINKER_SCRIPT_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
+unused := $(call capture_flags,$(BUILD_DIR)/link.flags,LD_VERSION LINKER_SCRIPT_ARG CPPFLAGS LDFLAGS OBJS LDLIBS)
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_SCRIPT) $(BUILD_DIR)/link_flags
+$(BUILD_DIR)/$(TARGET).elf: $(OBJS) $(LIBS_DEPS) $(LINKER_SCRIPT) $(BUILD_DIR)/link.flags
 	@echo Linking $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(LD) $(LINKER_SCRIPT_ARG) $(CPPFLAGS) $(LDFLAGS) $(OBJS) -Wl,--start-group $(LDLIBS) -Wl,--end-group -o $@
 
-unused := $(call capture_flags,$(BUILD_DIR)/hex_flags,OBJCOPY_VERSION)
+unused := $(call capture_flags,$(BUILD_DIR)/hex.flags,OBJCOPY_VERSION)
 
-$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex_flags
+$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/hex.flags
 	@echo Creating $(notdir $@)...
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O ihex $< $@
 
-unused := $(call capture_flags,$(BUILD_DIR)/build_flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
+unused := $(call capture_flags,$(BUILD_DIR)/build.flags,AS_VERSION CC_VERSION CXX_VERSION ASFLAGS CPPFLAGS CFLAGS CXXFLAGS)
 
-$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build_flags)))
+$(foreach _src,$(SRCS),$(eval $(call generate_build_rule,$(_src),$(ASFLAGS),$(CPPFLAGS),$(CFLAGS),$(CXXFLAGS),$(BUILD_DIR)/build.flags)))
 
 .PHONY: clean
 clean:
