@@ -8,7 +8,7 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 SIZE    = $(TOOLCHAIN_PREFIX)size
 
 define capture_version
-"$(shell $1 --version | head -n 1)"
+"$(shell $1 --version 2> /dev/null | head -n 1)"
 endef
 
 CC_VERSION      := $(call capture_version,$(CC))
